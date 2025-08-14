@@ -19,7 +19,12 @@ export const QuizQuestion = component$<QuizQuestionProps>(({
   timeRemaining
 }) => {
   const getAnswerClass = (index: number) => {
-    if (!showResult) return 'answer-option';
+    if (!showResult) {
+      if (index === selectedAnswer) {
+        return 'answer-option selected';
+      }
+      return 'answer-option';
+    }
     
     if (index === question.correctAnswer) {
       return 'answer-option correct';
@@ -56,7 +61,11 @@ export const QuizQuestion = component$<QuizQuestionProps>(({
       </div>
 
       <div class="question-content">
-        <h2 class="question-text">{question.question}</h2>
+        <div class="question-text">
+          <span class="question-number-display">Question {question.id}</span>
+          <span class="question-category-display">{question.category}</span>
+          <span class="question-main-text">{question.question}</span>
+        </div>
         
         <div class="answers-grid">
           {question.options.map((option, index) => (
