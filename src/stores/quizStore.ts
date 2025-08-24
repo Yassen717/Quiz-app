@@ -2,6 +2,8 @@ import { useStore, useSignal } from '@builder.io/qwik';
 import type { QuizState, Question } from '../types/quiz';
 
 export const useQuizStore = () => {
+  const timerDuration = useSignal(30);
+  
   const quizState = useStore<QuizState>({
     currentQuestionIndex: 0,
     score: 0,
@@ -9,7 +11,7 @@ export const useQuizStore = () => {
     isFinished: false,
     selectedAnswer: null,
     showResult: false,
-    timeRemaining: 30
+    timeRemaining: timerDuration.value
   });
 
   const currentQuestions = useSignal<Question[]>([]);
@@ -23,7 +25,7 @@ export const useQuizStore = () => {
     quizState.isFinished = false;
     quizState.selectedAnswer = null;
     quizState.showResult = false;
-    quizState.timeRemaining = 30;
+    quizState.timeRemaining = timerDuration.value;
   };
 
   const selectAnswer = (answerIndex: number) => {
@@ -43,7 +45,7 @@ export const useQuizStore = () => {
       quizState.currentQuestionIndex++;
       quizState.selectedAnswer = null;
       quizState.showResult = false;
-      quizState.timeRemaining = 30;
+      quizState.timeRemaining = timerDuration.value;
     } else {
       quizState.isFinished = true;
     }
@@ -55,7 +57,7 @@ export const useQuizStore = () => {
     quizState.isFinished = false;
     quizState.selectedAnswer = null;
     quizState.showResult = false;
-    quizState.timeRemaining = 30;
+    quizState.timeRemaining = timerDuration.value;
   };
 
   const getCurrentQuestion = () => {
@@ -70,16 +72,25 @@ export const useQuizStore = () => {
     return (quizState.score / quizState.totalQuestions) * 100;
   };
 
+  const setTimerDuration = (duration: number) => {
+    timerDuration.value = duration;
+    if (!quizState.showResult) {
+      quizState.timeRemaining = duration;
+    }
+  };
+
   return {
     quizState,
     currentQuestions,
     isLoading,
+    timerDuration,
     startQuiz,
     selectAnswer,
     nextQuestion,
     resetQuiz,
     getCurrentQuestion,
     getProgress,
-    getScorePercentage
+    getScorePercentage,
+    setTimerDuration
   };
-}; 
+};
