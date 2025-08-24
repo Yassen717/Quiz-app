@@ -25,4 +25,10 @@ export interface QuizCategoryInfo {
   icon: string;
   color: string;
   description: string;
-} 
+}
+
+export interface AppSettings {
+  darkMode: boolean;
+  soundEnabled: boolean;
+  timerDuration: number;
+}
