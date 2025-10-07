@@ -5,6 +5,7 @@ import { QuizResults } from "./QuizResults";
 import { useQuizStore } from "../stores/quizStore";
 import { questions } from "../data/questions";
 import type { QuizCategory } from "../types/quiz";
+import { ThemeToggle } from "./ThemeToggle";
 
 export const QuizApp = component$(() => {
   const currentView = useSignal<"categories" | "quiz" | "results">(
@@ -106,6 +107,7 @@ export const QuizApp = component$(() => {
                 {quizState.totalQuestions}
               </span>
               <span class="current-score">Score: {quizState.score}</span>
+              <ThemeToggle />
             </div>
           </div>
 

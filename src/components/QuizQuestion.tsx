@@ -49,9 +49,15 @@ export const QuizQuestion = component$<QuizQuestionProps>(
             <span class="question-difficulty">{question.difficulty}</span>
             <span class="question-category">{question.category}</span>
           </div>
-          <div class="timer">
-            <div class="timer-circle">
-              <span class="timer-text">{timeRemaining}s</span>
+          <div class="timer" aria-live="polite">
+            <div
+              class="timer-circle"
+              style={`--time-deg: ${((Math.max(0, Math.min(30, timeRemaining)) / 30) * 360).toFixed(0)}deg; background: conic-gradient(#ff6b6b var(--time-deg), #ffe0e0 var(--time-deg) 360deg);`}
+              aria-label={`Time remaining: ${timeRemaining}s`}
+            >
+              <span class="timer-text">
+                {timeRemaining > 0 ? `${timeRemaining}s` : "Time's up"}
+              </span>
             </div>
           </div>
         </div>
