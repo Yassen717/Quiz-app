@@ -1,5 +1,5 @@
-import { useStore, useSignal } from '@builder.io/qwik';
-import type { QuizState, Question } from '../types/quiz';
+import { useStore, useSignal } from "@builder.io/qwik";
+import type { QuizState, Question } from "../types/quiz";
 
 export const useQuizStore = () => {
   const quizState = useStore<QuizState>({
@@ -9,7 +9,7 @@ export const useQuizStore = () => {
     isFinished: false,
     selectedAnswer: null,
     showResult: false,
-    timeRemaining: 30
+    timeRemaining: 30,
   });
 
   const currentQuestions = useSignal<Question[]>([]);
@@ -28,11 +28,12 @@ export const useQuizStore = () => {
 
   const selectAnswer = (answerIndex: number) => {
     if (quizState.selectedAnswer !== null) return; // Prevent multiple selections
-    
+
     quizState.selectedAnswer = answerIndex;
     quizState.showResult = true;
-    
-    const currentQuestion = currentQuestions.value[quizState.currentQuestionIndex];
+
+    const currentQuestion =
+      currentQuestions.value[quizState.currentQuestionIndex];
     if (answerIndex === currentQuestion.correctAnswer) {
       quizState.score++;
     }
@@ -41,7 +42,7 @@ export const useQuizStore = () => {
   const nextQuestion = () => {
     if (quizState.currentQuestionIndex < quizState.totalQuestions - 1) {
       quizState.currentQuestionIndex++;
-      quizState.selectedAnswer = null;
+      quizState.selectedAnswer = null; // reset any previous selection, including -1 (timed out)
       quizState.showResult = false;
       quizState.timeRemaining = 30;
     } else {
@@ -80,6 +81,6 @@ export const useQuizStore = () => {
     resetQuiz,
     getCurrentQuestion,
     getProgress,
-    getScorePercentage
+    getScorePercentage,
   };
-}; 
+};

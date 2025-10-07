@@ -4,18 +4,24 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   category: QuizCategory;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
   explanation?: string;
 }
 
-export type QuizCategory = 'history' | 'math' | 'science' | 'geography' | 'literature' | 'sports';
+export type QuizCategory =
+  | "history"
+  | "math"
+  | "science"
+  | "geography"
+  | "literature"
+  | "sports";
 
 export interface QuizState {
   currentQuestionIndex: number;
   score: number;
   totalQuestions: number;
   isFinished: boolean;
-  selectedAnswer: number | null;
+  selectedAnswer: number | -1 | null;
   showResult: boolean;
   timeRemaining: number;
 }
@@ -25,4 +31,4 @@ export interface QuizCategoryInfo {
   icon: string;
   color: string;
   description: string;
-} 
+}

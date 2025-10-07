@@ -1,15 +1,17 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
-import { CategorySelection } from './CategorySelection';
-import { QuizQuestion } from './QuizQuestion';
-import { QuizResults } from './QuizResults';
-import { useQuizStore } from '../stores/quizStore';
-import { questions } from '../data/questions';
-import type { QuizCategory } from '../types/quiz';
+import { component$, useSignal, $, useVisibleTask$ } from "@builder.io/qwik";
+import { CategorySelection } from "./CategorySelection";
+import { QuizQuestion } from "./QuizQuestion";
+import { QuizResults } from "./QuizResults";
+import { useQuizStore } from "../stores/quizStore";
+import { questions } from "../data/questions";
+import type { QuizCategory } from "../types/quiz";
 
 export const QuizApp = component$(() => {
-  const currentView = useSignal<'categories' | 'quiz' | 'results'>('categories');
+  const currentView = useSignal<"categories" | "quiz" | "results">(
+    "categories",
+  );
   const selectedCategory = useSignal<QuizCategory | null>(null);
-  
+
   const {
     quizState,
     startQuiz,
@@ -17,14 +19,14 @@ export const QuizApp = component$(() => {
     nextQuestion,
     resetQuiz,
     getCurrentQuestion,
-    getProgress
+    getProgress,
   } = useQuizStore();
 
   const handleCategorySelect = $((category: QuizCategory) => {
     selectedCategory.value = category;
-    const categoryQuestions = questions.filter(q => q.category === category);
+    const categoryQuestions = questions.filter((q) => q.category === category);
     startQuiz(categoryQuestions);
-    currentView.value = 'quiz';
+    currentView.value = "quiz";
   });
 
   const handleAnswerSelect = $((answerIndex: number) => {
@@ -34,36 +36,74 @@ export const QuizApp = component$(() => {
   const handleNextQuestion = $(() => {
     nextQuestion();
     if (quizState.isFinished) {
-      currentView.value = 'results';
+      currentView.value = "results";
     }
   });
 
   const handleRestart = $(() => {
     resetQuiz();
-    currentView.value = 'quiz';
+    currentView.value = "quiz";
   });
 
   const handleBackToCategories = $(() => {
     resetQuiz();
     selectedCategory.value = null;
-    currentView.value = 'categories';
+    currentView.value = "categories";
+  });
+
+  useVisibleTask$(({ cleanup, track }) => {
+    const view = track(() => currentView.value);
+    const showResult = track(() => quizState.showResult);
+    const isFinished = track(() => quizState.isFinished);
+    const questionIndex = track(() => quizState.currentQuestionIndex);
+
+    if (view !== "quiz" || showResult || isFinished) {
+      return;
+    }
+
+    const id = setInterval(() => {
+      if (
+        quizState.timeRemaining > 0 &&
+        currentView.value === "quiz" &&
+        !quizState.showResult &&
+        !quizState.isFinished
+      ) {
+        quizState.timeRemaining--;
+        if (quizState.timeRemaining === 0) {
+          // Time's up: reveal result and prevent further answering
+          if (!quizState.showResult) {
+            quizState.showResult = true;
+          }
+          if (quizState.selectedAnswer === null) {
+            // Mark as timed out to disable buttons without affecting score
+            quizState.selectedAnswer = -1;
+          }
+        }
+      }
+    }, 1000);
+
+    cleanup(() => clearInterval(id));
   });
 
   return (
     <div class="quiz-app">
-      {currentView.value === 'categories' && (
+      {currentView.value === "categories" && (
         <CategorySelection onCategorySelect={handleCategorySelect} />
       )}
 
-      {currentView.value === 'quiz' && (
+      {currentView.value === "quiz" && (
         <div class="quiz-container">
           <div class="quiz-header">
             <div class="progress-bar">
-              <div class="progress-fill" style={`width: ${getProgress()}%`}></div>
+              <div
+                class="progress-fill"
+                style={`width: ${getProgress()}%`}
+              ></div>
             </div>
             <div class="quiz-info">
               <span class="current-question">
-                Question {quizState.currentQuestionIndex + 1} of {quizState.totalQuestions}
+                Question {quizState.currentQuestionIndex + 1} of{" "}
+                {quizState.totalQuestions}
               </span>
               <span class="current-score">Score: {quizState.score}</span>
             </div>
@@ -80,7 +120,7 @@ export const QuizApp = component$(() => {
         </div>
       )}
 
-      {currentView.value === 'results' && (
+      {currentView.value === "results" && (
         <QuizResults
           score={quizState.score}
           totalQuestions={quizState.totalQuestions}
@@ -90,4 +130,4 @@ export const QuizApp = component$(() => {
       )}
     </div>
   );
-}); 
+});
