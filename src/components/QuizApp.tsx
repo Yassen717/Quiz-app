@@ -5,10 +5,10 @@ import { QuizResults } from "./QuizResults";
 import { useQuizStore } from "../stores/quizStore";
 import { questions } from "../data/questions";
 import type { QuizCategory } from "../types/quiz";
-import { ThemeToggle } from "./ThemeToggle";
+import { SettingsPage } from "./SettingsPage";
 
 export const QuizApp = component$(() => {
-  const currentView = useSignal<"categories" | "quiz" | "results">(
+  const currentView = useSignal<"categories" | "quiz" | "results" | "settings">(
     "categories",
   );
   const selectedCategory = useSignal<QuizCategory | null>(null);
@@ -50,6 +50,15 @@ export const QuizApp = component$(() => {
     resetQuiz();
     selectedCategory.value = null;
     currentView.value = "categories";
+  });
+
+  const handleOpenSettings = $(() => {
+    currentView.value = "settings";
+  });
+
+  const handleBackFromSettings = $(() => {
+    // Return to quiz by default
+    currentView.value = "quiz";
   });
 
   useVisibleTask$(({ cleanup, track }) => {
@@ -107,7 +116,14 @@ export const QuizApp = component$(() => {
                 {quizState.totalQuestions}
               </span>
               <span class="current-score">Score: {quizState.score}</span>
-              <ThemeToggle />
+              <button
+                class="settings-button"
+                aria-label="Settings"
+                title="Settings"
+                onClick$={handleOpenSettings}
+              >
+                ⚙️
+              </button>
             </div>
           </div>
 
@@ -129,6 +145,10 @@ export const QuizApp = component$(() => {
           onRestart={handleRestart}
           onBackToCategories={handleBackToCategories}
         />
+      )}
+
+      {currentView.value === "settings" && (
+        <SettingsPage onBack={handleBackFromSettings} />
       )}
     </div>
   );
