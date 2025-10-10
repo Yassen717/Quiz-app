@@ -6,12 +6,17 @@ import { useQuizStore } from "../stores/quizStore";
 import { questions } from "../data/questions";
 import type { QuizCategory } from "../types/quiz";
 import { SettingsPage } from "./SettingsPage";
+import { useAIStore } from "../stores/aiStore";
 
 export const QuizApp = component$(() => {
   const currentView = useSignal<"categories" | "quiz" | "results" | "settings">(
     "categories",
   );
   const selectedCategory = useSignal<QuizCategory | null>(null);
+  const useAIGen = useSignal(false);
+  const aiCount = useSignal(10);
+  const aiDifficulty = useSignal<"easy" | "medium" | "hard" | "mixed">("mixed");
+  const ai = useAIStore();
 
   const {
     quizState,
@@ -23,8 +28,28 @@ export const QuizApp = component$(() => {
     getProgress,
   } = useQuizStore();
 
-  const handleCategorySelect = $((category: QuizCategory) => {
+  const handleCategorySelect = $(async (category: QuizCategory) => {
     selectedCategory.value = category;
+
+    if (useAIGen.value) {
+      const { valid } = ai.validateSettings();
+      if (!valid) {
+        currentView.value = "settings";
+        return;
+      }
+      const aiQs = await ai.generateQuestions({
+        count: aiCount.value,
+        category,
+        difficulty: aiDifficulty.value,
+        language: "en",
+      });
+      if (aiQs.length > 0) {
+        startQuiz(aiQs);
+        currentView.value = "quiz";
+        return;
+      }
+    }
+
     const categoryQuestions = questions.filter((q) => q.category === category);
     startQuiz(categoryQuestions);
     currentView.value = "quiz";
@@ -98,7 +123,66 @@ export const QuizApp = component$(() => {
   return (
     <div class="quiz-app">
       {currentView.value === "categories" && (
-        <CategorySelection onCategorySelect={handleCategorySelect} />
+        <div class="categories-view">
+          <div
+            class="categories-toolbar"
+            style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:12px 16px;"
+          >
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text-secondary,#555);">
+              Difficulty:
+              <select
+                value={aiDifficulty.value}
+                onChange$={(e) =>
+                  (aiDifficulty.value = (e.target as HTMLSelectElement)
+                    .value as "easy" | "medium" | "hard" | "mixed")
+                }
+                style="padding:6px 8px;border:1px solid var(--border,#e0e0e0);border-radius:8px;background:var(--surface-strong,#fff);color:var(--text-primary,#333);"
+                aria-label="AI difficulty"
+              >
+                <option value="mixed">Mixed</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text-secondary,#555);">
+              Count:
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={aiCount.value}
+                onInput$={(e) => {
+                  const v = parseInt((e.target as HTMLInputElement).value, 10);
+                  aiCount.value = Number.isFinite(v)
+                    ? Math.min(50, Math.max(1, v))
+                    : 10;
+                }}
+                style="width:80px;padding:6px 8px;border:1px solid var(--border,#e0e0e0);border-radius:8px;background:var(--surface-strong,#fff);color:var(--text-primary,#333);"
+                aria-label="AI question count"
+              />
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text-secondary,#555);">
+              <input
+                type="checkbox"
+                checked={useAIGen.value}
+                onChange$={(e) =>
+                  (useAIGen.value = (e.target as HTMLInputElement).checked)
+                }
+              />
+              Use AI-generated questions
+            </label>
+            {ai.state.isGenerating && (
+              <span
+                aria-live="polite"
+                style="font-size:0.9rem;color:var(--text-secondary,#666);"
+              >
+                Generating…
+              </span>
+            )}
+          </div>
+          <CategorySelection onCategorySelect={handleCategorySelect} />
+        </div>
       )}
 
       {currentView.value === "quiz" && (
